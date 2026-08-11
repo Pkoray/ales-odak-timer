@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ALES Odak</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          ink: {
+            950: '#0A0D12',
+            900: '#12161F',
+            800: '#161B26',
+            700: '#1E2430',
+            600: '#2A3140',
+            400: '#7A8093',
+            300: '#9AA0B0',
+            200: '#C5C9D3',
+            100: '#E7E9EF',
+          },
+          quant: { 500: '#5B9BFF', 400: '#7FB0FF' },
+          verbal: { 500: '#E2924B', 400: '#EAA968' },
+          focus: { 500: '#D9B25C', 400: '#E5C481' },
+        },
+        fontFamily: {
+          sans: ['Manrope', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+          mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+        },
+      },
+    },
+  };
+</script>
+<style>
+  html, body { background: #0A0D12; }
+  *:focus-visible { outline: 2px solid #D9B25C; outline-offset: 2px; }
+  @keyframes pulseGlow {
+    0%, 100% { filter: drop-shadow(0 0 0px rgba(217,178,92,0)); }
+    50% { filter: drop-shadow(0 0 16px rgba(217,178,92,0.4)); }
+  }
+  .running-glow { animation: pulseGlow 2.6s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce) {
+    .running-glow { animation: none; }
+  }
+  #progressRing { transition: stroke-dashoffset 1s linear; }
+</style>
+</head>
+<body class="font-sans">
+<div class="min-h-screen w-full flex items-center justify-center p-6 bg-ink-950 text-ink-100 relative overflow-hidden">
+  <div class="absolute inset-0 opacity-[0.035] pointer-events-none" style="background-image:radial-gradient(circle, #ffffff 1px, transparent 1px); background-size:24px 24px;"></div>
+  <div class="absolute inset-0 pointer-events-none" style="background:radial-gradient(ellipse 60% 40% at 50% 15%, rgba(217,178,92,0.10), transparent 70%);"></div>
+
+  <main class="relative w-full max-w-xl flex flex-col items-center gap-9 py-10">
+    <div class="flex flex-col items-center gap-2 text-center">
+      <span class="font-mono text-[11px] tracking-[0.35em] text-ink-400 uppercase">ALES · Odak Oturumu</span>
+      <h1 id="statusLabel" class="text-sm text-ink-300">Başlamaya hazır</h1>
+    </div>
+
+    <div id="ringWrap" class="relative flex items-center justify-center w-[min(76vw,290px)] h-[min(76vw,290px)]">
+      <svg viewBox="0 0 300 300" class="w-full h-full -rotate-90">
+        <g id="ticks" stroke="#2A3140" stroke-width="2"></g>
+        <circle cx="150" cy="150" r="130" fill="none" stroke="#1E2430" stroke-width="6"/>
+        <circle id="progressRing" cx="150" cy="150" r="130" fill="none" stroke="#D9B25C" stroke-width="6" stroke-linecap="round" stroke-dasharray="816.81" stroke-dashoffset="816.81"/>
+      </svg>
+      <div class="absolute inset-0 flex flex-col items-center justify-center gap-1.5">
+        <span id="timeDisplay" class="font-mono tabular-nums text-white font-semibold" style="font-size:clamp(42px,9vw,68px); letter-spacing:-0.02em;">150:00</span>
+        <span class="font-mono text-[10px] tracking-[0.3em] text-ink-400 uppercase">dk : sn</span>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <button id="startBtn" class="px-7 py-3 rounded-full bg-focus-500 text-ink-950 font-semibold text-sm hover:bg-focus-400 active:scale-95 disabled:opacity-30 disabled:pointer-events-none transition">Başla</button>
+      <button id="pauseBtn" class="px-7 py-3 rounded-full border border-ink-600 text-ink-200 font-semibold text-sm hover:border-ink-400 hover:text-white active:scale-95 disabled:opacity-30 disabled:pointer-events-none transition" disabled>Duraklat</button>
+      <button id="resetBtn" class="px-5 py-3 rounded-full text-ink-400 text-sm hover:text-white active:scale-95 transition">Sıfırla</button>
+    </div>
+
+    <div class="w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <!-- Sayısal -->
+      <section class="rounded-2xl bg-ink-900 border border-ink-700 p-5 flex flex-col gap-4">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-quant-500"></span>
+          <h2 class="font-mono text-[11px] tracking-[0.25em] text-ink-300 uppercase">Sayısal</h2>
+        </div>
+        <div class="flex items-baseline gap-2">
+          <span id="quantCount" class="font-mono tabular-nums text-4xl text-white font-semibold">0</span>
+          <span class="text-xs text-ink-400">soru çözüldü</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <div class="flex gap-1.5">
+            <button data-target="quant" data-delta="-10" class="w-9 h-8 rounded-lg text-xs font-mono border border-ink-700 text-ink-400 hover:border-ink-500 hover:text-white active:scale-95 transition">-10</button>
+            <button data-target="quant" data-delta="-5" class="w-9 h-8 rounded-lg text-xs font-mono border border-ink-700 text-ink-400 hover:border-ink-500 hover:text-white active:scale-95 transition">-5</button>
+            <button data-target="quant" data-delta="-1" class="w-9 h-8 rounded-lg text-xs font-mono border border-ink-700 text-ink-400 hover:border-ink-500 hover:text-white active:scale-95 transition">-1</button>
+          </div>
+          <div class="flex gap-1.5">
+            <button data-target="quant" data-delta="1" class="w-9 h-8 rounded-lg text-xs font-mono border border-quant-500/40 text-quant-400 hover:bg-quant-500/10 hover:border-quant-500 active:scale-95 transition">+1</button>
+            <button data-target="quant" data-delta="5" class="w-9 h-8 rounded-lg text-xs font-mono border border-quant-500/40 text-quant-400 hover:bg-quant-500/10 hover:border-quant-500 active:scale-95 transition">+5</button>
+            <button data-target="quant" data-delta="10" class="w-9 h-8 rounded-lg text-xs font-mono border border-quant-500/40 text-quant-400 hover:bg-quant-500/10 hover:border-quant-500 active:scale-95 transition">+10</button>
+          </div>
+        </div>
+      </section>
+      <!-- Sözel -->
+      <section class="rounded-2xl bg-ink-900 border border-ink-700 p-5 flex flex-col gap-4">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-verbal-500"></span>
+          <h2 class="font-mono text-[11px] tracking-[0.25em] text-ink-300 uppercase">Sözel</h2>
+        </div>
+        <div class="flex items-baseline gap-2">
+          <span id="verbalCount" class="font-mono tabular-nums text-4xl text-white font-semibold">0</span>
+          <span class="text-xs text-ink-400">soru çözüldü</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <div class="flex gap-1.5">
+            <button data-target="verbal" data-delta="-10" class="w-9 h-8 rounded-lg text-xs font-mono border border-ink-700 text-ink-400 hover:border-ink-500 hover:text-white active:scale-95 transition">-10</button>
+            <button data-target="verbal" data-delta="-5" class="w-9 h-8 rounded-lg text-xs font-mono border border-ink-700 text-ink-400 hover:border-ink-500 hover:text-white active:scale-95 transition">-5</button>
+            <button data-target="verbal" data-delta="-1" class="w-9 h-8 rounded-lg text-xs font-mono border border-ink-700 text-ink-400 hover:border-ink-500 hover:text-white active:scale-95 transition">-1</button>
+          </div>
+          <div class="flex gap-1.5">
+            <button data-target="verbal" data-delta="1" class="w-9 h-8 rounded-lg text-xs font-mono border border-verbal-500/40 text-verbal-400 hover:bg-verbal-500/10 hover:border-verbal-500 active:scale-95 transition">+1</button>
+            <button data-target="verbal" data-delta="5" class="w-9 h-8 rounded-lg text-xs font-mono border border-verbal-500/40 text-verbal-400 hover:bg-verbal-500/10 hover:border-verbal-500 active:scale-95 transition">+5</button>
+            <button data-target="verbal" data-delta="10" class="w-9 h-8 rounded-lg text-xs font-mono border border-verbal-500/40 text-verbal-400 hover:bg-verbal-500/10 hover:border-verbal-500 active:scale-95 transition">+10</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <p id="quote" class="text-center text-ink-400 italic text-sm max-w-md leading-relaxed px-4"></p>
+  </main>
+</div>
+
+<script>
+  // ----- Config -----
+  const DEFAULT_SECONDS = 150 * 60;
+  const RADIUS = 130;
+  const CIRC = 2 * Math.PI * RADIUS;
+
+  const QUOTES = [
+    "Bugün çözdüğün her soru, yarının puanına dönüşür.",
+    "Zihnin dağılsa da hedefin sabit kalsın.",
+    "150 dakika sonra bir adım daha ileridesin.",
+    "Konsantrasyon bir yetenek değil, bir alışkanlıktır.",
+    "Zor olan şu an; kalıcı olan bugün attığın adım.",
+    "Sınav salonunda rahat olmak, burada disiplinli çalışmaktan geçer.",
+    "Her boş kağıt, doldurulmayı bekleyen bir fırsattır.",
+    "Yorulduğunda değil, bitirdiğinde dur.",
+    "Bugünün 150 dakikası, yarının rahat sınavı.",
+    "Küçük ilerlemeler, büyük sonuçlar doğurur.",
+    "Odaklan; çünkü hedefin seni bekliyor.",
+    "Her tekrar, bilgiyi kalıcı kılar.",
+  ];
+
+  // ----- State -----
+  let remaining = DEFAULT_SECONDS;
+  let totalForRing = DEFAULT_SECONDS;
+  let timerId = null;
+  let running = false;
+
+  // ----- Elements -----
+  const timeDisplay = document.getElementById('timeDisplay');
+  const statusLabel = document.getElementById('statusLabel');
+  const progressRing = document.getElementById('progressRing');
+  const ringWrap = document.getElementById('ringWrap');
+  const startBtn = document.getElementById('startBtn');
+  const pauseBtn = document.getElementById('pauseBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const quantCount = document.getElementById('quantCount');
+  const verbalCount = document.getElementById('verbalCount');
+  const quoteEl = document.getElementById('quote');
+
+  // ----- Helpers -----
+  function formatTime(s) {
+    const m = Math.floor(s / 60).toString().padStart(2, '0');
+    const sec = Math.floor(s % 60).toString().padStart(2, '0');
+    return `${m}:${sec}`;
+  }
+
+  function updateRing() {
+    const fraction = Math.max(0, Math.min(1, remaining / totalForRing));
+    progressRing.style.strokeDashoffset = (CIRC * fraction).toFixed(2);
+  }
+
+  function updateDisplay() {
+    timeDisplay.textContent = formatTime(remaining);
+    updateRing();
+  }
+
+  function setStatus(text) {
+    statusLabel.textContent = text;
+  }
+
+  function stopInterval() {
+    if (timerId) {
+      clearInterval(timerId);
+      timerId = null;
+    }
+  }
+
+  function tick() {
+    remaining -= 1;
+    if (remaining <= 0) {
+      remaining = 0;
+      stopInterval();
+      running = false;
+      setStatus('Süre doldu');
+      startBtn.disabled = true;
+      pauseBtn.disabled = true;
+      ringWrap.classList.remove('running-glow');
+    }
+    updateDisplay();
+  }
+
+  function start() {
+    if (running || remaining <= 0) return;
+    running = true;
+    timerId = setInterval(tick, 1000);
+    setStatus('Odaklanılıyor…');
+    startBtn.disabled = true;
+    pauseBtn.disabled = false;
+    ringWrap.classList.add('running-glow');
+  }
+
+  function pause() {
+    if (!running) return;
+    running = false;
+    stopInterval();
+    setStatus('Duraklatıldı');
+    startBtn.disabled = false;
+    pauseBtn.disabled = true;
+    ringWrap.classList.remove('running-glow');
+  }
+
+  function reset() {
+    stopInterval();
+    running = false;
+    remaining = DEFAULT_SECONDS;
+    totalForRing = DEFAULT_SECONDS;
+    setStatus('Başlamaya hazır');
+    startBtn.disabled = false;
+    pauseBtn.disabled = true;
+    ringWrap.classList.remove('running-glow');
+    updateDisplay();
+  }
+
+  function adjustCount(el, delta) {
+    const current = parseInt(el.textContent, 10) || 0;
+    el.textContent = Math.max(0, current + delta);
+  }
+
+  // ----- Ring tick marks (OMR / cevap kağıdı esintili) -----
+  const ticksGroup = document.getElementById('ticks');
+  for (let i = 0; i < 12; i++) {
+    const angle = (i * 30) * (Math.PI / 180);
+    const x1 = 150 + 122 * Math.cos(angle);
+    const y1 = 150 + 122 * Math.sin(angle);
+    const x2 = 150 + 130 * Math.cos(angle);
+    const y2 = 150 + 130 * Math.sin(angle);
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', x1.toFixed(2));
+    line.setAttribute('y1', y1.toFixed(2));
+    line.setAttribute('x2', x2.toFixed(2));
+    line.setAttribute('y2', y2.toFixed(2));
+    ticksGroup.appendChild(line);
+  }
+
+  // ----- Events -----
+  startBtn.addEventListener('click', start);
+  pauseBtn.addEventListener('click', pause);
+  resetBtn.addEventListener('click', reset);
+
+  document.querySelectorAll('[data-target]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const targetEl = btn.dataset.target === 'quant' ? quantCount : verbalCount;
+      adjustCount(targetEl, parseInt(btn.dataset.delta, 10));
+    });
+  });
+
+  // ----- Init -----
+  progressRing.setAttribute('stroke-dasharray', CIRC.toFixed(2));
+  updateDisplay();
+  quoteEl.textContent = `“${QUOTES[Math.floor(Math.random() * QUOTES.length)]}”`;
+</script>
+</body>
+</html>
